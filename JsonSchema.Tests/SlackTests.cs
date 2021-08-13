@@ -9,9 +9,7 @@ namespace Json.Schema.Tests
 {
 	public class SlackTests
 	{
-
-
-	[Test]
+		[Test]
 		public void MultiDraftSelfValidation()
 		{
 			var json =
