@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Json.Schema.Generation.Intents;
 
@@ -24,9 +25,9 @@ namespace Json.Schema.Generation
 			Desription = description;
 		}
 
-		void IAttributeHandler.AddConstraints(SchemaGeneratorContext context)
+		void IAttributeHandler.AddConstraints(SchemaGeneratorContext context, IEnumerable<Attribute> attributes)
 		{
-			var attribute = context.Attributes.OfType<DescriptionAttribute>().FirstOrDefault();
+			var attribute = attributes.OfType<DescriptionAttribute>().FirstOrDefault();
 			if (attribute == null) return;
 
 			context.Intents.Add(new DescriptionIntent(attribute.Desription));

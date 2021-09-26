@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Json.Schema.Generation.Intents;
 
@@ -24,9 +25,9 @@ namespace Json.Schema.Generation
 			Value = Convert.ToDecimal(value);
 		}
 
-		void IAttributeHandler.AddConstraints(SchemaGeneratorContext context)
+		void IAttributeHandler.AddConstraints(SchemaGeneratorContext context, IEnumerable<Attribute> attributes)
 		{
-			var attribute = context.Attributes.OfType<MaximumAttribute>().FirstOrDefault();
+			var attribute = attributes.OfType<MaximumAttribute>().FirstOrDefault();
 			if (attribute == null) return;
 
 			if (!context.Type.IsNumber()) return;

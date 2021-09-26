@@ -57,13 +57,13 @@ namespace Json.Schema.Generation
 			_handlers.Remove(handler);
 		}
 
-		internal static void HandleAttributes(SchemaGeneratorContext context)
+		internal static void HandleAttributes(SchemaGeneratorContext context, List<Attribute> attributes)
 		{
-			var handlers = _handlers.Concat(context.Attributes.OfType<IAttributeHandler>());
+			var handlers = _handlers.Concat(attributes.OfType<IAttributeHandler>());
 
 			foreach (var handler in handlers)
 			{
-				handler.AddConstraints(context);
+				handler.AddConstraints(ref context, attributes);
 			}
 		}
 	}

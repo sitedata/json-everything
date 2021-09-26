@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 using Json.Schema.Generation.Intents;
 
@@ -14,9 +16,10 @@ namespace Json.Schema.Generation
 		/// intents to the context.
 		/// </summary>
 		/// <param name="context">The generation context.</param>
-		public void AddConstraints(SchemaGeneratorContext context)
+		/// <param name="attributes"></param>
+		public void AddConstraints(SchemaGeneratorContext context, IEnumerable<Attribute> attributes)
 		{
-			var attribute = context.Attributes.OfType<JsonNumberHandlingAttribute>().FirstOrDefault();
+			var attribute = attributes.OfType<JsonNumberHandlingAttribute>().FirstOrDefault();
 			if (attribute == null) return;
 
 			if (!context.Type.IsNumber()) return;

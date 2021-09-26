@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using Json.Schema.Generation.Intents;
 using NUnit.Framework;
@@ -20,14 +21,14 @@ namespace Json.Schema.Generation.Tests
 			public bool Value3 { get; set; }
 		}
 
-		private class Refiner : ISchemaRefiner
+		private class Refiner : IMemberSchemaRefiner
 		{
-			public bool ShouldRun(SchemaGeneratorContext context)
+			public bool ShouldRun(SchemaGeneratorContext context, IEnumerable<Attribute> attributes)
 			{
 				return context.Type.GetProperties().Length % 2 == 1;
 			}
 
-			public void Run(SchemaGeneratorContext context)
+			public void Run(SchemaGeneratorContext context, IEnumerable<Attribute> attributes)
 			{
 				context.Intents.Add(new ReadOnlyIntent(true));
 			}
@@ -38,7 +39,7 @@ namespace Json.Schema.Generation.Tests
 		{
 			var configuration = new SchemaGeneratorConfiguration
 			{
-				Refiners = {new Refiner()}
+				MemberRefiners = {new Refiner()}
 			};
 
 			JsonSchema expected = new JsonSchemaBuilder()
@@ -62,7 +63,7 @@ namespace Json.Schema.Generation.Tests
 		{
 			var configuration = new SchemaGeneratorConfiguration
 			{
-				Refiners = {new Refiner()}
+				MemberRefiners = {new Refiner()}
 			};
 
 			JsonSchema expected = new JsonSchemaBuilder()

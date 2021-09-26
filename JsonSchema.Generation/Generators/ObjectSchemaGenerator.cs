@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using Json.Schema.Generation.Refiners;
 
 namespace Json.Schema.Generation.Generators
 {
@@ -49,7 +50,9 @@ namespace Json.Schema.Generation.Generators
 #pragma warning restore 8600
 				if (ignoreAttribute != null) continue;
 
-				var memberContext = SchemaGenerationContextCache.Get(member.GetMemberType(), memberAttributes, context.Configuration);
+				var typeContext = SchemaGenerationContextCache.Get(member.GetMemberType(), context.Configuration);
+				var memberContext = new SchemaGeneratorContext();
+				AttributeHandler.HandleAttributes(memberContext, memberAttributes);
 
 				var name = context.Configuration.PropertyNamingMethod(member.Name);
 				var nameAttribute = memberAttributes.OfType<JsonPropertyNameAttribute>().FirstOrDefault();
@@ -59,12 +62,23 @@ namespace Json.Schema.Generation.Generators
 				if (memberAttributes.OfType<ObsoleteAttribute>().Any())
 					memberContext.Intents.Add(new DeprecatedIntent(true));
 
-				props.Add(name, memberContext);
+				if (memberContext.Intents.Any())
+				{
+					var containerContext = new SchemaGeneratorContext();
+					containerContext.Intents.Add(new AllOfIntent(typeContext.Intents, memberContext.Intents));
+					props.Add(name, memberContext);
+				}
 
 				if (memberAttributes.OfType<RequiredAttribute>().Any())
 					required.Add(name);
-			}
 
+				var refiners = context.Configuration.MemberRefiners;
+				refiners.Add(NullabilityRefiner.Instance);
+				foreach (var refiner in refiners.Where(x => x.ShouldRun(context, memberAttributes)))
+				{
+					refiner.Run(context, memberAttributes);
+				}
+			}
 
 			if (props.Count > 0)
 			{
@@ -74,6 +88,5 @@ namespace Json.Schema.Generation.Generators
 					context.Intents.Add(new RequiredIntent(required));
 			}
 		}
-
 	}
 }

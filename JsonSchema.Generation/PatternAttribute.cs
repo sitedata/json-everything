@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Json.Schema.Generation.Intents;
@@ -25,9 +26,9 @@ namespace Json.Schema.Generation
 			Value = value;
 		}
 
-		void IAttributeHandler.AddConstraints(SchemaGeneratorContext context)
+		void IAttributeHandler.AddConstraints(SchemaGeneratorContext context, IEnumerable<Attribute> attributes)
 		{
-			var attribute = context.Attributes.OfType<PatternAttribute>().FirstOrDefault();
+			var attribute = attributes.OfType<PatternAttribute>().FirstOrDefault();
 			if (attribute == null) return;
 
 			if (context.Type != typeof(string)) return;

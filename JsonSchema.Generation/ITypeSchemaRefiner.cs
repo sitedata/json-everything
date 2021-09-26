@@ -8,7 +8,7 @@
 	/// schema itself is created.  This is used to add customization
 	/// logic.
 	/// </remarks>
-	public interface ISchemaRefiner
+	public interface ITypeSchemaRefiner
 	{
 		/// <summary>
 		/// Determines if the refiner should run.

@@ -14,7 +14,7 @@ namespace Json.Schema.Generation.Generators
 			var underlyingType = Nullable.GetUnderlyingType(context.Type);
 
 			if (underlyingType == null) return;
-			var underlyingContext = SchemaGenerationContextCache.Get(underlyingType, context.Attributes, context.Configuration);
+			var underlyingContext = SchemaGenerationContextCache.Get(underlyingType, context.Configuration);
 
 			context.Intents.AddRange(underlyingContext.Intents);
 		}

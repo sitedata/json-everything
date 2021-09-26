@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 
@@ -11,9 +12,9 @@ namespace Json.Schema.Generation.Tests
 		{
 			public const uint MaxLength = 100;
 
-			void IAttributeHandler.AddConstraints(SchemaGeneratorContext context)
+			void IAttributeHandler.AddConstraints(SchemaGeneratorContext context, IEnumerable<Attribute> attributes)
 			{
-				if (context.Attributes.Any(x => x.GetType() == typeof(AttributeWithDirectHandler)))
+				if (attributes.Any(x => x.GetType() == typeof(AttributeWithDirectHandler)))
 					context.Intents.Add(new Intents.MaxLengthIntent(MaxLength));
 			}
 		}
@@ -26,9 +27,9 @@ namespace Json.Schema.Generation.Tests
 
 		private class CustomAttributeHandler : IAttributeHandler
 		{
-			void IAttributeHandler.AddConstraints(SchemaGeneratorContext context)
+			void IAttributeHandler.AddConstraints(SchemaGeneratorContext context, IEnumerable<Attribute> attributes)
 			{
-				if (context.Attributes.Any(x => x.GetType() == typeof(AttributeWithIndirectHandler)))
+				if (attributes.Any(x => x.GetType() == typeof(AttributeWithIndirectHandler)))
 					context.Intents.Add(new Intents.MaxLengthIntent(AttributeWithIndirectHandler.MaxLength));
 			}
 		}

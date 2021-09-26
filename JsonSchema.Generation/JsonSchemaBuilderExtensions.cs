@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Json.Schema.Generation
 {
@@ -32,7 +31,7 @@ namespace Json.Schema.Generation
 			configuration ??= new SchemaGeneratorConfiguration();
 
 			SchemaGenerationContextCache.Clear();
-			var context = SchemaGenerationContextCache.Get(type, new List<Attribute>(), configuration);
+			var context = SchemaGenerationContextCache.Get(type, configuration);
 
 			context.Optimize();
 

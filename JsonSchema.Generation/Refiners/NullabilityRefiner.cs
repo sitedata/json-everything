@@ -1,26 +1,27 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Json.Schema.Generation.Intents;
 
 namespace Json.Schema.Generation.Refiners
 {
-	internal class NullabilityRefiner : ISchemaRefiner
+	internal class NullabilityRefiner : IMemberSchemaRefiner
 	{
 		public static NullabilityRefiner Instance { get; } = new NullabilityRefiner();
 
 		private NullabilityRefiner(){}
 
-		public bool ShouldRun(SchemaGeneratorContext context)
+		public bool ShouldRun(SchemaGeneratorContext context, IEnumerable<Attribute> attributes)
 		{
 			return context.Intents.OfType<TypeIntent>().Any();
 		}
 
-		public void Run(SchemaGeneratorContext context)
+		public void Run(SchemaGeneratorContext context, IEnumerable<Attribute> attributes)
 		{
 			var typeIntent = context.Intents.OfType<TypeIntent>().FirstOrDefault();
 			if (typeIntent == null) return; // shouldn't happen because of ShouldRun(), but including just in case.
 
-			var nullableAttribute = context.Attributes.OfType<NullableAttribute>().FirstOrDefault();
+			var nullableAttribute = attributes.OfType<NullableAttribute>().FirstOrDefault();
 			var nullabilityOverride = nullableAttribute?.IsNullable;
 
 			if (nullabilityOverride.HasValue)

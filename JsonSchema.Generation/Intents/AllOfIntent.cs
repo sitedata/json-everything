@@ -7,7 +7,7 @@ namespace Json.Schema.Generation.Intents
 	/// <summary>
 	/// Provides intent to create a `anyOf` keyword.
 	/// </summary>
-	public class AnyOfIntent : ISchemaKeywordIntent
+	public class AllOfIntent : ISchemaKeywordIntent
 	{
 		/// <summary>
 		/// Gets the subschemas to include.
@@ -15,19 +15,19 @@ namespace Json.Schema.Generation.Intents
 		public List<SchemaGeneratorContext> Subschemas { get; }
 
 		/// <summary>
-		/// Creates a new instance of the <see cref="AnyOfIntent"/> class.
+		/// Creates a new instance of the <see cref="AllOfIntent"/> class.
 		/// </summary>
 		/// <param name="subschemas">The subschemas to include.</param>
-		public AnyOfIntent(IEnumerable<SchemaGeneratorContext> subschemas)
+		public AllOfIntent(IEnumerable<SchemaGeneratorContext> subschemas)
 		{
 			Subschemas = subschemas.ToList();
 		}
 
 		/// <summary>
-		/// Creates a new instance of the <see cref="AnyOfIntent"/> class.
+		/// Creates a new instance of the <see cref="AllOfIntent"/> class.
 		/// </summary>
 		/// <param name="subschemas">The subschemas to include.</param>
-		public AnyOfIntent(params SchemaGeneratorContext[] subschemas)
+		public AllOfIntent(params SchemaGeneratorContext[] subschemas)
 		{
 			Subschemas = subschemas.ToList();
 		}
@@ -38,7 +38,7 @@ namespace Json.Schema.Generation.Intents
 		/// <param name="builder">The builder.</param>
 		public void Apply(JsonSchemaBuilder builder)
 		{
-			builder.AnyOf(Subschemas.Select(Build));
+			builder.AllOf(Subschemas.Select(Build));
 		}
 
 		private static JsonSchema Build(SchemaGeneratorContext subschema)
@@ -67,7 +67,7 @@ namespace Json.Schema.Generation.Intents
 		{
 			unchecked
 			{
-				var hashCode = typeof(AnyOfIntent).GetHashCode();
+				var hashCode = typeof(AllOfIntent).GetHashCode();
 				hashCode = (hashCode * 397) ^ Subschemas.GetCollectionHashCode();
 				return hashCode;
 			}

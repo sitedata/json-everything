@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Json.Schema.Generation.Intents;
+ using JetBrains.Annotations;
+ using Json.Schema.Generation.Intents;
  using Json.Schema.Generation.Refiners;
 
  namespace Json.Schema.Generation
@@ -32,13 +33,9 @@ using Json.Schema.Generation.Intents;
 		/// </summary>
 		public Type Type { get; }
 		/// <summary>
-		/// The set of attributes.  Will be populated when an attribute has a property.
-		/// </summary>
-		public List<Attribute> Attributes { get; }
-		/// <summary>
 		/// The current set of keyword intents.
 		/// </summary>
-		public List<ISchemaKeywordIntent> Intents { get; } = new List<ISchemaKeywordIntent>();
+		public List<ISchemaKeywordIntent> Intents { get; } = new();
 		/// <summary>
 		/// The generator configuration.
 		/// </summary>
@@ -46,10 +43,9 @@ using Json.Schema.Generation.Intents;
 		
 		internal IComparer<MemberInfo> DeclarationOrderComparer => _memberInfoComparer ??= new MemberInfoMetadataTokenComparer(Type);
 
-		internal SchemaGeneratorContext(Type type, List<Attribute> attributes, SchemaGeneratorConfiguration configuration)
+		internal SchemaGeneratorContext(Type type, SchemaGeneratorConfiguration configuration)
 		{
 			Type = type;
-			Attributes = attributes;
 			Configuration = configuration;
 		}
 
@@ -58,14 +54,8 @@ using Json.Schema.Generation.Intents;
 			var generator = Configuration.Generators.FirstOrDefault(x => x.Handles(Type)) ?? GeneratorRegistry.Get(Type);
 			generator?.AddConstraints(this);
 
-			AttributeHandler.HandleAttributes(this);
-
-			var refiners = Configuration.Refiners.ToList();
-			refiners.Add(NullabilityRefiner.Instance);
-			foreach (var refiner in refiners.Where(x => x.ShouldRun(this)))
-			{
-				refiner.Run(this);
-			}
+			var attributes = Type.GetCustomAttributes().ToList();
+			AttributeHandler.HandleAttributes(this, attributes);
 		}
 
 		internal void Optimize()
@@ -84,7 +74,7 @@ using Json.Schema.Generation.Intents;
 			{
 				var name = def.Value.GetDefName(currentNames);
 				var refIntent = new RefIntent(new Uri(def.Key == thisHash ? "#" : $"#/$defs/{name}", UriKind.Relative));
-				var refContext = new SchemaGeneratorContext(def.Value.Type, null!, Configuration);
+				var refContext = new SchemaGeneratorContext(def.Value.Type, Configuration);
 				refContext.Intents.Add(refIntent);
 				foreach (var intent in contextContainers)
 				{
@@ -191,20 +181,14 @@ using Json.Schema.Generation.Intents;
 			if (obj.GetType() != GetType()) return false;
 
 			var other = (SchemaGeneratorContext) obj;
-			return Type == other.Type &&
-				   Intents.ContentsEqual(other.Intents);
+			return Type == other.Type;
 		}
 
 		/// <summary>Serves as the default hash function.</summary>
 		/// <returns>A hash code for the current object.</returns>
 		public override int GetHashCode()
 		{
-			unchecked
-			{
-				var hashCode = Type.GetHashCode();
-				hashCode = (hashCode * 397) ^ (Attributes?.GetAttributeSetHashCode() ?? 0);
-				return hashCode;
-			}
+			return Type.GetHashCode();
 		}
 	}
 }
