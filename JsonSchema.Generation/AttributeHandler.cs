@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Json.Schema.Generation
 {
@@ -9,39 +10,34 @@ namespace Json.Schema.Generation
 	/// </summary>
 	public static class AttributeHandler
 	{
-		private static readonly List<IAttributeHandler> _handlers =
-			typeof(IAttributeHandler)
-				.Assembly
-				.DefinedTypes
-				.Where(t => typeof(IAttributeHandler).IsAssignableFrom(t) &&
-				            !typeof(Attribute).IsAssignableFrom(t) &&
-				            !t.IsAbstract && !t.IsInterface)
-				.Select(Activator.CreateInstance)
-				.Cast<IAttributeHandler>()
-				.ToList();
+		private static readonly Dictionary<Type, Func<Attribute, IAttributeHandler>> _handlers = new();
+
+		static AttributeHandler()
+		{
+			AddHandler<JsonNumberHandlingAttributeHandler>();
+			AddHandler<ObsoleteAttributeHandler>();
+		}
 
 		/// <summary>
 		/// Adds a handler for a custom attribute that cannot be made to implement <see cref="IAttributeHandler"/>.
 		/// </summary>
 		/// <typeparam name="T">The handler type.</typeparam>
 		public static void AddHandler<T>()
-			where T : IAttributeHandler, new()
+			where T : IAttributeHandler
 		{
 			if (_handlers.Any(h => h.GetType() == typeof(T))) return;
 
-			_handlers.Add(new T());
-		}
+			var constructor = typeof(T).GetConstructors()
+				.FirstOrDefault(x =>
+				{
+					var parameters = x.GetParameters();
+					if (parameters.Length != 1) return false;
+					var parameter = parameters[0];
+					return typeof(Attribute).IsAssignableFrom(parameter.ParameterType);
+				});
+			if (constructor == null) return;
 
-		/// <summary>
-		/// Adds a handler for a custom attribute that cannot be made to implement <see cref="IAttributeHandler"/>.
-		/// </summary>
-		/// <param name="handler">The handler.</param>
-		public static void AddHandler(IAttributeHandler handler)
-		{
-			var handlerType = handler.GetType();
-			if (_handlers.Any(h => h.GetType() == handlerType)) return;
-
-			_handlers.Add(handler);
+			_handlers[constructor.GetParameters()[0].ParameterType] = x => (IAttributeHandler) constructor.Invoke(new object[] {x});
 		}
 
 		/// <summary>
@@ -51,20 +47,31 @@ namespace Json.Schema.Generation
 		public static void RemoveHandler<T>()
 			where T : IAttributeHandler
 		{
-			var handler = _handlers.OfType<T>().FirstOrDefault();
-			if (handler == null) return;
-
-			_handlers.Remove(handler);
+			_handlers.Remove(typeof(T));
 		}
 
 		internal static void HandleAttributes(SchemaGeneratorContext context)
 		{
-			var handlers = _handlers.Concat(context.Attributes.OfType<IAttributeHandler>());
+			var attributes = context.Type.GetCustomAttributes().ToList();
+			var selfHandling = attributes.Where(x => x is IAttributeHandler).ToList();
+			var customHandling = attributes.Except(selfHandling);
+			var customHandlers = _handlers.Join(customHandling,
+					h => h.Key,
+					a => a.GetType(),
+					(h, a) => h.Value(a))
+				.ToList();
+			var handlers = selfHandling.Cast<IAttributeHandler>().Concat(customHandlers);
 
-			foreach (var handler in handlers)
-			{
-				handler.AddConstraints(context);
-			}
+			context.Intents.AddRange(handlers.SelectMany(x => x.GetConstraints(context)));
+		}
+
+		internal static IEnumerable<ISchemaKeywordIntent> HandleExtraAttribute(SchemaGeneratorContext context, Attribute attribute)
+		{
+			if (attribute is IAttributeHandler handler) return handler.GetConstraints(context);
+
+			if (!_handlers.TryGetValue(attribute.GetType(), out var handlerFunc)) return Enumerable.Empty<ISchemaKeywordIntent>();
+
+			return handlerFunc(attribute).GetConstraints(context);
 		}
 	}
 }

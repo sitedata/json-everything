@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using Json.Schema.Generation.Intents;
 
 namespace Json.Schema.Generation
@@ -24,14 +24,11 @@ namespace Json.Schema.Generation
 			Value = value;
 		}
 
-		void IAttributeHandler.AddConstraints(SchemaGeneratorContext context)
+		IEnumerable<ISchemaKeywordIntent> IAttributeHandler.GetConstraints(SchemaGeneratorContext context)
 		{
-			var attribute = context.Attributes.OfType<MaxItemsAttribute>().FirstOrDefault();
-			if (attribute == null) return;
+			if (!context.Type.IsArray()) yield break;
 
-			if (!context.Type.IsArray()) return;
-
-			context.Intents.Add(new MaxItemsIntent(attribute.Value));
+			yield return new MaxItemsIntent(Value);
 		}
 	}
 }

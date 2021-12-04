@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using Json.Schema.Generation.Intents;
 
 namespace Json.Schema.Generation
@@ -18,11 +18,7 @@ namespace Json.Schema.Generation
 		/// <summary>
 		/// Creates a new <see cref="ReadOnlyAttribute"/> instance with a value of `true`.
 		/// </summary>
-		public ReadOnlyAttribute()
-			: this(true)
-		{
-
-		}
+		public ReadOnlyAttribute() : this(true) { }
 
 		/// <summary>
 		/// Creates a new <see cref="ReadOnlyAttribute"/> instance.
@@ -33,12 +29,9 @@ namespace Json.Schema.Generation
 			Value = value;
 		}
 
-		void IAttributeHandler.AddConstraints(SchemaGeneratorContext context)
+		IEnumerable<ISchemaKeywordIntent> IAttributeHandler.GetConstraints(SchemaGeneratorContext context)
 		{
-			var attribute = context.Attributes.OfType<ReadOnlyAttribute>().FirstOrDefault();
-			if (attribute == null) return;
-
-			context.Intents.Add(new ReadOnlyIntent(attribute.Value));
+			yield return new ReadOnlyIntent(Value);
 		}
 	}
 }

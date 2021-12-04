@@ -1,18 +1,20 @@
-﻿ using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Json.Schema.Generation.Intents;
- using Json.Schema.Generation.Refiners;
+using Json.Schema.Generation.Refiners;
 
- namespace Json.Schema.Generation
+namespace Json.Schema.Generation
 {
 	/// <summary>
 	/// Provides meta-data about the generation process.
 	/// </summary>
 	public class SchemaGeneratorContext
 	{
+		[DebuggerDisplay("{Context.Type.Name} ({Count})")]
 		private class ContextCount
 		{
 			public SchemaGeneratorContext Context { get; }
@@ -32,10 +34,6 @@ using Json.Schema.Generation.Intents;
 		/// </summary>
 		public Type Type { get; }
 		/// <summary>
-		/// The set of attributes.  Will be populated when an attribute has a property.
-		/// </summary>
-		public List<Attribute> Attributes { get; }
-		/// <summary>
 		/// The current set of keyword intents.
 		/// </summary>
 		public List<ISchemaKeywordIntent> Intents { get; } = new List<ISchemaKeywordIntent>();
@@ -43,14 +41,25 @@ using Json.Schema.Generation.Intents;
 		/// The generator configuration.
 		/// </summary>
 		public SchemaGeneratorConfiguration Configuration { get; }
-		
+		/// <summary>
+		/// A base context if this context is built on another type.
+		/// </summary>
+		public SchemaGeneratorContext? Base { get; }
+
 		internal IComparer<MemberInfo> DeclarationOrderComparer => _memberInfoComparer ??= new MemberInfoMetadataTokenComparer(Type);
 
-		internal SchemaGeneratorContext(Type type, List<Attribute> attributes, SchemaGeneratorConfiguration configuration)
+		private IEnumerable<ISchemaKeywordIntent> AllIntents => Base != null ? Intents.Concat(Base.Intents) : Intents;
+
+		internal SchemaGeneratorContext(Type type, SchemaGeneratorConfiguration configuration)
 		{
 			Type = type;
-			Attributes = attributes;
 			Configuration = configuration;
+		}
+
+		internal SchemaGeneratorContext(SchemaGeneratorContext typeContext)
+			: this(typeContext.Type, typeContext.Configuration)
+		{
+			Base = typeContext;
 		}
 
 		internal void GenerateIntents()
@@ -72,9 +81,12 @@ using Json.Schema.Generation.Intents;
 		{
 			var thisHash = GetHashCode();
 			var allContexts = GetChildContexts();
-			var defsByHashCode = allContexts.Where(g => g.Value.Count > 1 &&
-			                                            (g.Value.Context.Intents.Count != 1 ||
-			                                            !(g.Value.Context.Intents[0] is TypeIntent)))
+			var defsByHashCode = allContexts.Where(g =>
+				{
+					var allIntents = g.Value.Context.AllIntents.ToList();
+					return g.Value.Count > 1 &&
+					       (allIntents.Count != 1 || !(allIntents[0] is TypeIntent));
+				})
 				.ToDictionary(g => g.Key, g => g.Value.Context);
 
 			var currentNames = new List<string>();
@@ -84,7 +96,7 @@ using Json.Schema.Generation.Intents;
 			{
 				var name = def.Value.GetDefName(currentNames);
 				var refIntent = new RefIntent(new Uri(def.Key == thisHash ? "#" : $"#/$defs/{name}", UriKind.Relative));
-				var refContext = new SchemaGeneratorContext(def.Value.Type, null!, Configuration);
+				var refContext = new SchemaGeneratorContext(def.Value.Type, Configuration);
 				refContext.Intents.Add(refIntent);
 				foreach (var intent in contextContainers)
 				{
@@ -143,7 +155,7 @@ using Json.Schema.Generation.Intents;
 
 		private Dictionary<int, ContextCount> GetChildContexts()
 		{
-			var contextsToCheck = new List<SchemaGeneratorContext>{this};
+			var contextsToCheck = new List<SchemaGeneratorContext> { this };
 			var contextsReceived = new Dictionary<int, ContextCount>();
 			while (contextsToCheck.Any())
 			{
@@ -157,7 +169,7 @@ using Json.Schema.Generation.Intents;
 					continue;
 				}
 
-				contextsToCheck.AddRange(context.Intents.OfType<IContextContainer>().SelectMany(i => i.GetContexts()));
+				contextsToCheck.AddRange(context.AllIntents.OfType<IContextContainer>().SelectMany(i => i.GetContexts()));
 				contextsReceived[hash] = new ContextCount(context);
 			}
 
@@ -173,7 +185,11 @@ using Json.Schema.Generation.Intents;
 		{
 			builder ??= new JsonSchemaBuilder();
 
-			foreach (var intent in Intents)
+			var intentsToApply = new List<ISchemaKeywordIntent>(Intents);
+			if (Base != null)
+				intentsToApply.AddRange(Base.Intents);
+
+			foreach (var intent in intentsToApply)
 			{
 				intent.Apply(builder);
 			}
@@ -199,12 +215,7 @@ using Json.Schema.Generation.Intents;
 		/// <returns>A hash code for the current object.</returns>
 		public override int GetHashCode()
 		{
-			unchecked
-			{
-				var hashCode = Type.GetHashCode();
-				hashCode = (hashCode * 397) ^ (Attributes?.GetAttributeSetHashCode() ?? 0);
-				return hashCode;
-			}
+			return Type.GetHashCode();
 		}
 	}
 }

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using Json.Schema.Generation.Intents;
 
 namespace Json.Schema.Generation
@@ -24,14 +24,11 @@ namespace Json.Schema.Generation
 			Length = length;
 		}
 
-		void IAttributeHandler.AddConstraints(SchemaGeneratorContext context)
+		IEnumerable<ISchemaKeywordIntent> IAttributeHandler.GetConstraints(SchemaGeneratorContext context)
 		{
-			var attribute = context.Attributes.OfType<MinLengthAttribute>().FirstOrDefault();
-			if (attribute == null) return;
+			if (context.Type != typeof(string)) yield break;
 
-			if (context.Type != typeof(string)) return;
-
-			context.Intents.Add(new MinLengthIntent(attribute.Length));
+			yield return new MinLengthIntent(Length);
 		}
 	}
 }

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using Json.Schema.Generation.Intents;
 
 namespace Json.Schema.Generation
@@ -18,11 +18,7 @@ namespace Json.Schema.Generation
 		/// <summary>
 		/// Creates a new <see cref="WriteOnlyAttribute"/> instance with a value of `true`.
 		/// </summary>
-		public WriteOnlyAttribute()
-			: this(true)
-		{
-
-		}
+		public WriteOnlyAttribute() : this(true) { }
 
 		/// <summary>
 		/// Creates a new <see cref="WriteOnlyAttribute"/> instance.
@@ -33,12 +29,9 @@ namespace Json.Schema.Generation
 			Value = value;
 		}
 
-		void IAttributeHandler.AddConstraints(SchemaGeneratorContext context)
+		IEnumerable<ISchemaKeywordIntent> IAttributeHandler.GetConstraints(SchemaGeneratorContext context)
 		{
-			var attribute = context.Attributes.OfType<WriteOnlyAttribute>().FirstOrDefault();
-			if (attribute == null) return;
-
-			context.Intents.Add(new WriteOnlyIntent(attribute.Value));
+			yield return new WriteOnlyIntent(Value);
 		}
 	}
 }

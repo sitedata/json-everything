@@ -1,4 +1,6 @@
-﻿namespace Json.Schema.Generation
+﻿using System.Collections.Generic;
+
+namespace Json.Schema.Generation
 {
 	/// <summary>
 	/// Defines requirements to handle converting an attribute to a keyword intent.
@@ -10,6 +12,6 @@
 		/// intents to the context.
 		/// </summary>
 		/// <param name="context">The generation context.</param>
-		void AddConstraints(SchemaGeneratorContext context);
+		IEnumerable<ISchemaKeywordIntent> GetConstraints(SchemaGeneratorContext context);
 	}
 }

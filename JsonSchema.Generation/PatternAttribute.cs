@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Json.Schema.Generation.Intents;
 
@@ -25,14 +25,11 @@ namespace Json.Schema.Generation
 			Value = value;
 		}
 
-		void IAttributeHandler.AddConstraints(SchemaGeneratorContext context)
+		IEnumerable<ISchemaKeywordIntent> IAttributeHandler.GetConstraints(SchemaGeneratorContext context)
 		{
-			var attribute = context.Attributes.OfType<PatternAttribute>().FirstOrDefault();
-			if (attribute == null) return;
+			if (context.Type != typeof(string)) yield break;
 
-			if (context.Type != typeof(string)) return;
-
-			context.Intents.Add(new PatternIntent(attribute.Value));
+			yield return new PatternIntent(Value);
 		}
 	}
 }

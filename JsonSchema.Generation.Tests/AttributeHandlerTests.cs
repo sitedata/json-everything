@@ -1,6 +1,8 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using NUnit.Framework;
+
+using static Json.Schema.Generation.Tests.AssertionExtensions;
 
 namespace Json.Schema.Generation.Tests
 {
@@ -11,10 +13,9 @@ namespace Json.Schema.Generation.Tests
 		{
 			public const uint MaxLength = 100;
 
-			void IAttributeHandler.AddConstraints(SchemaGeneratorContext context)
+			IEnumerable<ISchemaKeywordIntent> IAttributeHandler.GetConstraints(SchemaGeneratorContext context)
 			{
-				if (context.Attributes.Any(x => x.GetType() == typeof(AttributeWithDirectHandler)))
-					context.Intents.Add(new Intents.MaxLengthIntent(MaxLength));
+				yield return new Intents.MaxLengthIntent(MaxLength);
 			}
 		}
 
@@ -26,10 +27,9 @@ namespace Json.Schema.Generation.Tests
 
 		private class CustomAttributeHandler : IAttributeHandler
 		{
-			void IAttributeHandler.AddConstraints(SchemaGeneratorContext context)
+			IEnumerable<ISchemaKeywordIntent> IAttributeHandler.GetConstraints(SchemaGeneratorContext context)
 			{
-				if (context.Attributes.Any(x => x.GetType() == typeof(AttributeWithIndirectHandler)))
-					context.Intents.Add(new Intents.MaxLengthIntent(AttributeWithIndirectHandler.MaxLength));
+				yield return new Intents.MaxLengthIntent(AttributeWithIndirectHandler.MaxLength);
 			}
 		}
 
@@ -56,7 +56,7 @@ namespace Json.Schema.Generation.Tests
 
 			JsonSchema actual = new JsonSchemaBuilder().FromType<TypeWithCustomAttribute1>();
 
-			Assert.AreEqual(expected, actual);
+			 AssertEqual(expected, actual);
 		}
 
 		[Test]
@@ -73,7 +73,7 @@ namespace Json.Schema.Generation.Tests
 
 			JsonSchema actual = new JsonSchemaBuilder().FromType<TypeWithCustomAttribute2>();
 
-			Assert.AreEqual(expected, actual);
+			AssertEqual(expected, actual);
 		}
 	}
 }

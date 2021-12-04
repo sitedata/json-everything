@@ -49,15 +49,14 @@ namespace Json.Schema.Generation.Generators
 #pragma warning restore 8600
 				if (ignoreAttribute != null) continue;
 
-				var memberContext = SchemaGenerationContextCache.Get(member.GetMemberType(), memberAttributes, context.Configuration);
+				var typeContext = SchemaGenerationContextCache.Get(member.GetMemberType(), context.Configuration);
+				var memberContext = new SchemaGeneratorContext(typeContext);
+				memberContext.Intents.AddRange(memberAttributes.SelectMany(x => AttributeHandler.HandleExtraAttribute(context, x)));
 
 				var name = context.Configuration.PropertyNamingMethod(member.Name);
 				var nameAttribute = memberAttributes.OfType<JsonPropertyNameAttribute>().FirstOrDefault();
 				if (nameAttribute != null)
 					name = nameAttribute.Name;
-
-				if (memberAttributes.OfType<ObsoleteAttribute>().Any())
-					memberContext.Intents.Add(new DeprecatedIntent(true));
 
 				props.Add(name, memberContext);
 

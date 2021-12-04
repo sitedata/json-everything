@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using Json.Schema.Generation.Intents;
 
 namespace Json.Schema.Generation
@@ -24,14 +24,11 @@ namespace Json.Schema.Generation
 			Value = Convert.ToDecimal(value);
 		}
 
-		void IAttributeHandler.AddConstraints(SchemaGeneratorContext context)
+		IEnumerable<ISchemaKeywordIntent> IAttributeHandler.GetConstraints(SchemaGeneratorContext context)
 		{
-			var attribute = context.Attributes.OfType<ExclusiveMaximumAttribute>().FirstOrDefault();
-			if (attribute == null) return;
+			if (!context.Type.IsNumber()) yield break;
 
-			if (!context.Type.IsNumber()) return;
-
-			context.Intents.Add(new ExclusiveMaximumIntent(attribute.Value));
+			yield return new ExclusiveMaximumIntent(Value);
 		}
 	}
 }

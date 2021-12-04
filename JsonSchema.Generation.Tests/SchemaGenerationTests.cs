@@ -120,6 +120,8 @@ namespace Json.Schema.Generation.Tests
 		}
 
 		// ReSharper disable once ClassNeverInstantiated.Local
+		[Title("target")]
+		[Description("target description")]
 		private class GenerationTarget
 		{
 			[JsonInclude]
