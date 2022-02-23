@@ -29,11 +29,11 @@ namespace Json.Path
 				["length"] = LengthSelector.Instance
 			};
 
-		private readonly IEnumerable<ISelector> _nodes;
+		private readonly IEnumerable<ISelector> _selectors;
 
-		private JsonPath(IEnumerable<ISelector> nodes)
+		private JsonPath(IEnumerable<ISelector> selectors)
 		{
-			_nodes = nodes;
+			_selectors = selectors;
 		}
 
 		/// <summary>
@@ -240,7 +240,7 @@ namespace Json.Path
 
 			var context = new EvaluationContext(root, options);
 
-			foreach (var node in _nodes)
+			foreach (var node in _selectors)
 			{
 				node.Evaluate(context);
 
@@ -254,7 +254,19 @@ namespace Json.Path
 		/// <returns>A string that represents the current object.</returns>
 		public override string ToString()
 		{
-			return string.Concat(_nodes.Select(n => n.ToString()));
+			return string.Concat(_selectors.Select(n => n.ToString()));
+		}
+
+		public bool TryGetNormalizedString([NotNullWhen(true)] out string? normalized)
+		{
+			if (_selectors.Any(x => !x.CanBeNormalized()))
+			{
+				normalized = null;
+				return false;
+			}
+
+			normalized = string.Concat(_selectors.Select(x => x.GetNormalizedString()));
+			return true;
 		}
 	}
 }

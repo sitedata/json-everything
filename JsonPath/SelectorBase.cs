@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Json.Path
 {
@@ -12,6 +13,16 @@ namespace Json.Path
 			{
 				context.Current.AddRange(ProcessMatch(match));
 			}
+		}
+
+		public virtual bool CanBeNormalized()
+		{
+			return false;
+		}
+
+		public virtual string GetNormalizedString()
+		{
+			throw new NotImplementedException();
 		}
 
 		protected abstract IEnumerable<PathMatch> ProcessMatch(PathMatch match);

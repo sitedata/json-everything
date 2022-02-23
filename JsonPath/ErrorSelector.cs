@@ -15,5 +15,15 @@ namespace Json.Path
 		{
 			throw new NotImplementedException();
 		}
+
+		public bool CanBeNormalized()
+		{
+			return false;
+		}
+
+		public string GetNormalizedString()
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

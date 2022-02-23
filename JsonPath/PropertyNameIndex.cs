@@ -71,6 +71,12 @@ namespace Json.Path
 			return true;
 		}
 
+		internal string Normalize()
+		{
+			// TODO: add escaping
+			return $"'{_name}'";
+		}
+
 		public override string ToString()
 		{
 			// TODO: add escaping

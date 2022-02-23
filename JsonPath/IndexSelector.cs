@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using Json.Pointer;
@@ -7,11 +8,11 @@ namespace Json.Path
 {
 	internal class IndexSelector : SelectorBase
 	{
-		private readonly List<IIndexExpression>? _ranges;
+		private readonly List<IIndexExpression>? _indices;
 
-		public IndexSelector(IEnumerable<IIndexExpression>? ranges)
+		public IndexSelector(IEnumerable<IIndexExpression>? indices)
 		{
-			_ranges = ranges?.ToList();
+			_indices = indices?.ToList();
 		}
 
 		protected override IEnumerable<PathMatch> ProcessMatch(PathMatch match)
@@ -21,7 +22,7 @@ namespace Json.Path
 				case JsonValueKind.Array:
 					var array = match.Value.EnumerateArray().ToArray();
 					IEnumerable<int> indices;
-					indices = _ranges?.OfType<IArrayIndexExpression>()
+					indices = _indices?.OfType<IArrayIndexExpression>()
 						          .SelectMany(r => r.GetIndices(match.Value))
 						          .Where(i => 0 <= i && i < array.Length)
 						          .Distinct() ??
@@ -32,9 +33,9 @@ namespace Json.Path
 					}
 					break;
 				case JsonValueKind.Object:
-					if (_ranges != null)
+					if (_indices != null)
 					{
-						var props = _ranges.OfType<IObjectIndexExpression>()
+						var props = _indices.OfType<IObjectIndexExpression>()
 							.SelectMany(r => r.GetProperties(match.Value))
 							.Distinct();
 						foreach (var prop in props)
@@ -56,7 +57,32 @@ namespace Json.Path
 
 		public override string ToString()
 		{
-			return _ranges == null ? "[*]" : $"[{string.Join(",", _ranges.Select(r => r.ToString()))}]";
+			return _indices == null ? "[*]" : $"[{string.Join(",", _indices.Select(r => r.ToString()))}]";
+		}
+
+		public override bool CanBeNormalized()
+		{
+			return _indices is {Count: 1} &&
+			       (_indices[0] is PropertyNameIndex ||
+			        (_indices[0] is SimpleIndex simple && simple.CanBeNormalized()));
+		}
+
+		public override string GetNormalizedString()
+		{
+			string NormalizeIndex(IIndexExpression index)
+			{
+				switch (index)
+				{
+					case PropertyNameIndex prop:
+						return prop.Normalize();
+					case SimpleIndex simple:
+						return simple.ToString();
+					default:
+						throw new InvalidOperationException();
+				}
+			}
+
+			return $"[{NormalizeIndex(_indices![0])}]";
 		}
 	}
 }

@@ -13,5 +13,15 @@ namespace Json.Path
 		{
 			return "$";
 		}
+
+		public override bool CanBeNormalized()
+		{
+			return true;
+		}
+
+		public override string GetNormalizedString()
+		{
+			return ToString();
+		}
 	}
 }

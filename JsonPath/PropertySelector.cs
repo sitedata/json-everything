@@ -48,5 +48,15 @@ namespace Json.Path
 		{
 			return _name == null ? ".*" : $".{_name}";
 		}
+
+		public override bool CanBeNormalized()
+		{
+			return _name != null;
+		}
+
+		public override string GetNormalizedString()
+		{
+			return $"['{_name}']";
+		}
 	}
 }

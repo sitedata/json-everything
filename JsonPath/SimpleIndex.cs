@@ -33,6 +33,11 @@ namespace Json.Path
 			return true;
 		}
 
+		internal bool CanBeNormalized()
+		{
+			return !_index.IsFromEnd;
+		}
+
 		public static implicit operator SimpleIndex(Index index)
 		{
 			return new SimpleIndex(index);
