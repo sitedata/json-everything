@@ -257,6 +257,11 @@ namespace Json.Path
 			return string.Concat(_selectors.Select(n => n.ToString()));
 		}
 
+		/// <summary>
+		/// Tries to convert the path to a normalized representation.
+		/// </summary>
+		/// <param name="normalized">The normalized representation</param>
+		/// <returns>True if the path can be normalized; false otherwise.</returns>
 		public bool TryGetNormalizedString([NotNullWhen(true)] out string? normalized)
 		{
 			if (_selectors.Any(x => !x.CanBeNormalized()))

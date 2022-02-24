@@ -17,6 +17,7 @@ namespace Json.Path.Tests
 				yield return new TestCaseData("$.foo[1:4]", null);
 				yield return new TestCaseData("$.foo[1,4]", null);
 				yield return new TestCaseData("$[?(@.foo == 'bar')]", null);
+				yield return new TestCaseData("$..['foo']", null);
 			}
 		}
 
